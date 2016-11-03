@@ -47,17 +47,19 @@ string FPReplaceEntry::toString()
         case RETYPE_INSTRUCTION: ss << " [insn]";      break;
     }
     switch (tag) {
-        case RETAG_IGNORE:    ss << " [ignore]";      break;
-        case RETAG_SINGLE:    ss << " [single]";      break;
-        case RETAG_DOUBLE:    ss << " [double]";      break;
-        case RETAG_CANDIDATE: ss << " [candidate]";   break;
-        case RETAG_NULL:      ss << " [null]";        break;
-        case RETAG_CINST:     ss << " [cinst]";       break;
-        case RETAG_DCANCEL:   ss << " [dcancel]";     break;
-        case RETAG_DNAN:      ss << " [dnan]";        break;
-        case RETAG_TRANGE:    ss << " [trange]";      break;
-        case RETAG_RPREC:     ss << " [rprec]";       break;
-        case RETAG_NONE:    break;
+        case RETAG_IGNORE:           ss << " [ignore]";        break;
+        case RETAG_SINGLE:           ss << " [single]";        break;
+        case RETAG_DOUBLE:           ss << " [double]";        break;
+        case RETAG_CANDIDATE:        ss << " [candidate]";     break;
+        case RETAG_NULL:             ss << " [null]";          break;
+        case RETAG_CINST:            ss << " [cinst]";         break;
+        case RETAG_DCANCEL:          ss << " [dcancel]";       break;
+        case RETAG_DNAN:             ss << " [dnan]";          break;
+        case RETAG_TRANGE:           ss << " [trange]";        break;
+        case RETAG_THISTOGRAM:       ss << " [thistogram]";    break;
+        case RETAG_THIST_PER_INST:   ss << " [thistperinst]";  break;
+        case RETAG_RPREC:            ss << " [rprec]";         break;
+        case RETAG_NONE:                                       break;
     }
     if (parent) {
        ss << " parent=" << parent->name;

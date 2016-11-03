@@ -30,7 +30,7 @@ DYNINST_LDFLAGS = -L$(DYNINST_ROOT)/$(PLATFORM)/lib $(LOCAL_LIB_DIRS) -ldwarf \
 
 # various compiler/linker flags
 COMMON_CFLAGS  = -I./h -Iextern -I$(XED_KIT)/include -I $(LOCAL_INC_DIRS)
-COMMON_LDFLAGS = -lrt $(XED_KIT)/lib/libxed.a -lelf $(LOCAL_LIB_DIRS)
+COMMON_LDFLAGS = -lrt $(XED_KIT)/lib/libxed.a -lelf -lgsl -lgslcblas -lm $(LOCAL_LIB_DIRS)
 LIB_CFLAGS     = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_CFLAGS) $(COMMON_CFLAGS) -msse2 -mfpmath=sse -O1
 LIB_LDFLAGS    = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_LDFLAGS) -L./$(PLATFORM) $(COMMON_LDFLAGS)
 CONF_CFLAGS    = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_CFLAGS) $(COMMON_CFLAGS) -msse2
@@ -42,6 +42,7 @@ DEPEND_CFLAGS  = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_CFLAGS) $(COMMON_CFLAGS)
 # modules to build for analysis library
 LIB_MODULES = libfpanalysis fpflag fpinfo FPAnalysis \
 			  FPAnalysisCInst FPAnalysisTRange \
+			  FPAnalysisTHistogram \
 			  FPAnalysisDCancel FPAnalysisDNan \
 			  FPAnalysisInplace FPAnalysisPointer \
 			  FPAnalysisRPrec \

@@ -58,22 +58,24 @@ class FPConfig
          * These used to be only for replacement (thus the "RE_" nomenclature),
          * but now they can be used to configure a mutatee for all types of analysis.
          */
-        static const char RE_FLAG      = '^';       // flag indicating a mutatee config entry
-        static const char RE_NONE      = ' ';       // empty flag
-        static const char RE_IGNORE    = '!';       // ignore (do not instrument or replace)
-        static const char RE_NULL      = 'x';       // null instrumentation (only Dyninst overhead)
+        static const char RE_FLAG       = '^';       // flag indicating a mutatee config entry
+        static const char RE_NONE       = ' ';       // empty flag
+        static const char RE_IGNORE     = '!';       // ignore (do not instrument or replace)
+        static const char RE_NULL       = 'x';       // null instrumentation (only Dyninst overhead)
 
         // Replacement-based analyses:
-        static const char RE_TRANGE    = 't';       // range tracking replacement
-        static const char RE_CANDIDATE = '?';       // candidate for replacement
-        static const char RE_SINGLE    = 's';       // single-precision replacement
-        static const char RE_DOUBLE    = 'd';       // double-precision replacement
-        static const char RE_RPREC     = 'r';       // reduced precision replacement
+        static const char RE_TRANGE         = 't';   // range tracking replacement
+        static const char RE_THISTOGRAM     = 'h';   // histogram tracking replacement
+        static const char RE_THIST_PER_INST = 'H';   // per instruction histogram tracking replacement
+        static const char RE_CANDIDATE      = '?';   // candidate for replacement
+        static const char RE_SINGLE         = 's';   // single-precision replacement
+        static const char RE_DOUBLE         = 'd';   // double-precision replacement
+        static const char RE_RPREC          = 'r';   // reduced precision replacement
 
         // Instrumentation-based analyses:
-        static const char RE_CINST     = 'i';       // instruction counting
-        static const char RE_DCANCEL   = 'c';       // cancellation detection
-        static const char RE_DNAN      = 'n';       // NaN detection
+        static const char RE_CINST      = 'i';       // instruction counting
+        static const char RE_DCANCEL    = 'c';       // cancellation detection
+        static const char RE_DNAN       = 'n';       // NaN detection
 
 
         static const string RE_APP;

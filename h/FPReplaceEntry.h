@@ -14,17 +14,19 @@ enum FPReplaceEntryType {
 };
 
 enum FPReplaceEntryTag {
-    RETAG_NONE,         // yield to parent in tree
-    RETAG_IGNORE,       // do not replace or instrument
-    RETAG_SINGLE,       // replace with svinp single
-    RETAG_DOUBLE,       // replace with svinp double
-    RETAG_CANDIDATE,    // placeholder for automatic search
-    RETAG_NULL,         // null snippet
-    RETAG_CINST,        // instruction counting
-    RETAG_DCANCEL,      // cancellation detection
-    RETAG_DNAN,         // NaN detection
-    RETAG_TRANGE,       // range tracking
-    RETAG_RPREC         // reduced precision
+    RETAG_NONE,             // yield to parent in tree
+    RETAG_IGNORE,           // do not replace or instrument
+    RETAG_SINGLE,           // replace with svinp single
+    RETAG_DOUBLE,           // replace with svinp double
+    RETAG_CANDIDATE,        // placeholder for automatic search
+    RETAG_NULL,             // null snippet
+    RETAG_CINST,            // instruction counting
+    RETAG_DCANCEL,          // cancellation detection
+    RETAG_DNAN,             // NaN detection
+    RETAG_TRANGE,           // range tracking
+    RETAG_THISTOGRAM,       // histogram tracking
+    RETAG_THIST_PER_INST,   // histogram tracking per instruction
+    RETAG_RPREC             // reduced precision
 };
 
 /**

@@ -36,6 +36,8 @@ bool countInst = false;
 bool detectCancel = false;
 bool detectNaN = false;
 bool trackRange = false;
+bool trackHistogram = false;
+bool trackHistogramPerInst = false;
 bool inplaceSV = false;
 bool reducePrec = false;
 char* inplaceSVType = NULL;
@@ -175,6 +177,21 @@ void configInstruction(void *addr, unsigned char *bytes, size_t nbytes)
             entry->tag = RETAG_CANDIDATE;
         } else {
             entry->tag = RETAG_TRANGE;
+        }
+    }
+
+    // configure histogram-tracking analysis
+    if (trackHistogram && mainAnalysis->shouldReplace(inst)) {
+        if (outputCandidates) {
+            entry->tag = RETAG_CANDIDATE;
+        } else {
+            entry->tag = RETAG_THISTOGRAM;
+        }
+    } else if (trackHistogramPerInst && mainAnalysis->shouldReplace(inst)) {
+        if (outputCandidates) {
+            entry->tag = RETAG_CANDIDATE;
+        } else {
+            entry->tag = RETAG_THIST_PER_INST;
         }
     }
 
@@ -425,10 +442,12 @@ void usage()
     printf("\n");
     printf("  --report             report original precision: single/double (default)\n");
     printf("  --null               null instrumentation\n");
-	printf("  --cinst              count all floating-point instructions\n");
-	printf("  --dcancel            detect cancellation events\n");
-	printf("  --dnan               detect NaN values\n");
-	printf("  --trange             track operand value ranges\n");
+    printf("  --cinst              count all floating-point instructions\n");
+    printf("  --dcancel            detect cancellation events\n");
+    printf("  --dnan               detect NaN values\n");
+    printf("  --trange             track operand value ranges\n");
+    printf("  --thistogram         track operand value histograms\n");
+    printf("  --thistperinst       track operand value histograms per instruction\n");
     printf("  --svinp <policy>     in-place replacement shadow value analysis\n");
     printf("                         valid policies: \"single\", \"double\", \"mem_single\", \"mem_double\"\n");
     printf("  --rprec <bits>       reduced precision analysis\n");
@@ -460,28 +479,32 @@ bool parseCommandLine(unsigned argc, char *argv[])
 		} else if (strcmp(argv[i], "--null")==0) {
 			nullInst = true;
 		} else if (strcmp(argv[i], "--report")==0) {
-            reportOriginal = true;
+			reportOriginal = true;
 		} else if (strcmp(argv[i], "--cinst")==0) {
-            countInst = true;
+			countInst = true;
 		} else if (strcmp(argv[i], "--dcancel")==0) {
-            detectCancel = true;
+			detectCancel = true;
 		} else if (strcmp(argv[i], "--dnan")==0) {
-            detectNaN = true;
+			detectNaN = true;
 		} else if (strcmp(argv[i], "--trange")==0) {
-            trackRange = true;
+			trackRange = true;
+		} else if (strcmp(argv[i], "--thistogram")==0) {
+			trackHistogram = true;
+		} else if (strcmp(argv[i], "--thistperinst")==0) {
+			trackHistogramPerInst = true;
 		} else if (strcmp(argv[i], "--svinp")==0) {
-            inplaceSV = true;
-            inplaceSVType = argv[++i];
+			inplaceSV = true;
+			inplaceSVType = argv[++i];
 		} else if (strcmp(argv[i], "--rprec")==0) {
-            reducePrec = true;
-            reducePrecDefaultPrec = strtoul(argv[++i], NULL, 10);
-        } else if (argv[i][0] == '-') {
-            printf("Unrecognized option: %s\n", argv[i]);
-            usage();
-            exit(EXIT_FAILURE);
+			reducePrec = true;
+			reducePrecDefaultPrec = strtoul(argv[++i], NULL, 10);
+		} else if (argv[i][0] == '-') {
+			printf("Unrecognized option: %s\n", argv[i]);
+			usage();
+			exit(EXIT_FAILURE);
 		} else if (i <= argc-1) {
-            binary = argv[i];
-            binaryArg = i;
+			binary = argv[i];
+			binaryArg = i;
 			validArgs = true;
 			break;
 		}

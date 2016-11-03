@@ -145,17 +145,19 @@ void FPConfig::addReplaceEntry(string line)
     // parse tag
     if (line.length() >= 2) {
         switch (line[1]) {
-            case RE_IGNORE:     entry->tag = RETAG_IGNORE;      break;
-            case RE_SINGLE:     entry->tag = RETAG_SINGLE;      break;
-            case RE_DOUBLE:     entry->tag = RETAG_DOUBLE;      break;
-            case RE_CANDIDATE:  entry->tag = RETAG_CANDIDATE;   break;
-            case RE_NULL:       entry->tag = RETAG_NULL;        break;
-            case RE_CINST:      entry->tag = RETAG_CINST;       break;
-            case RE_DCANCEL:    entry->tag = RETAG_DCANCEL;     break;
-            case RE_DNAN:       entry->tag = RETAG_DNAN;        break;
-            case RE_TRANGE:     entry->tag = RETAG_TRANGE;      break;
-            case RE_RPREC:      entry->tag = RETAG_RPREC;       break;
-            default:            entry->tag = RETAG_NONE;        break;
+            case RE_IGNORE:         entry->tag = RETAG_IGNORE;          break;
+            case RE_SINGLE:         entry->tag = RETAG_SINGLE;          break;
+            case RE_DOUBLE:         entry->tag = RETAG_DOUBLE;          break;
+            case RE_CANDIDATE:      entry->tag = RETAG_CANDIDATE;       break;
+            case RE_NULL:           entry->tag = RETAG_NULL;            break;
+            case RE_CINST:          entry->tag = RETAG_CINST;           break;
+            case RE_DCANCEL:        entry->tag = RETAG_DCANCEL;         break;
+            case RE_DNAN:           entry->tag = RETAG_DNAN;            break;
+            case RE_TRANGE:         entry->tag = RETAG_TRANGE;          break;
+            case RE_THISTOGRAM:     entry->tag = RETAG_THISTOGRAM;      break;
+            case RE_THIST_PER_INST: entry->tag = RETAG_THIST_PER_INST;  break;
+            case RE_RPREC:          entry->tag = RETAG_RPREC;           break;
+            default:                entry->tag = RETAG_NONE;            break;
         }
     }
 
@@ -357,17 +359,19 @@ string FPConfig::getReplaceEntryLine(FPReplaceEntry *rentry)
     ss.clear(); ss.str("");
     ss << RE_FLAG;
     switch (rentry->tag) {
-        case RETAG_IGNORE:      ss << RE_IGNORE;      break;
-        case RETAG_SINGLE:      ss << RE_SINGLE;      break;
-        case RETAG_DOUBLE:      ss << RE_DOUBLE;      break;
-        case RETAG_CANDIDATE:   ss << RE_CANDIDATE;   break;
-        case RETAG_NULL:        ss << RE_NULL;        break;
-        case RETAG_CINST:       ss << RE_CINST;       break;
-        case RETAG_DCANCEL:     ss << RE_DCANCEL;     break;
-        case RETAG_DNAN:        ss << RE_DNAN;        break;
-        case RETAG_TRANGE:      ss << RE_TRANGE;      break;
-        case RETAG_RPREC:       ss << RE_RPREC;       break;
-        default:                ss << RE_NONE;      break;
+        case RETAG_IGNORE:          ss << RE_IGNORE;          break;
+        case RETAG_SINGLE:          ss << RE_SINGLE;          break;
+        case RETAG_DOUBLE:          ss << RE_DOUBLE;          break;
+        case RETAG_CANDIDATE:       ss << RE_CANDIDATE;       break;
+        case RETAG_NULL:            ss << RE_NULL;            break;
+        case RETAG_CINST:           ss << RE_CINST;           break;
+        case RETAG_DCANCEL:         ss << RE_DCANCEL;         break;
+        case RETAG_DNAN:            ss << RE_DNAN;            break;
+        case RETAG_TRANGE:          ss << RE_TRANGE;          break;
+        case RETAG_THISTOGRAM:      ss << RE_THISTOGRAM;      break;
+        case RETAG_THIST_PER_INST:  ss << RE_THIST_PER_INST;  break;
+        case RETAG_RPREC:           ss << RE_RPREC;           break;
+        default:                    ss << RE_NONE;            break;
     }
     ss << " ";
     switch (rentry->type) {

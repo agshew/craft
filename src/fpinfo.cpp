@@ -44,6 +44,20 @@ FPAnalysisInfo allAnalysisInfo[] = {
         ""
     },
 
+    {   FPAnalysisTHistogram::getInstance(false),
+        "--thistogram", NULL,
+        "--thistogram",
+        "track operand value histograms",
+        ""
+    },
+
+    {   FPAnalysisTHistogram::getInstance(true),
+        "--thistperinst", NULL,
+        "--thistperinst",
+        "track operand value histograms per instruction",
+        ""
+    },
+
     {   FPAnalysisTRange::getInstance(),
         "--trange", NULL,
         "--trange",
@@ -70,7 +84,7 @@ FPAnalysisInfo allAnalysisInfo[] = {
         "--rprec <bits>",
         "reduced-precision analysis",
         ""
-    }
+    },
 
     // NEWMODE: add info for new analyses here
     //
