@@ -7,6 +7,9 @@
 # pointer to the "extras/xed2-intel64" folder (for lib/libxed.a)
 XED_KIT=
 
+# pointer to the libcount.a
+LIBCOUNT=
+
 # modify these lines if you need the compiler/linker to find things in
 # non-standard locations (e.g., Boost or libdwarf)
 LOCAL_INC_DIRS =
@@ -30,7 +33,7 @@ DYNINST_LDFLAGS = -L$(DYNINST_ROOT)/$(PLATFORM)/lib $(LOCAL_LIB_DIRS) -ldwarf \
 
 # various compiler/linker flags
 COMMON_CFLAGS  = -I./h -Iextern -I$(XED_KIT)/include -I $(LOCAL_INC_DIRS)
-COMMON_LDFLAGS = -lrt $(XED_KIT)/lib/libxed.a -lelf -lgsl -lgslcblas -lm $(LOCAL_LIB_DIRS)
+COMMON_LDFLAGS = -lrt $(XED_KIT)/lib/libxed.a $(LIBCOUNT)/libcount.a -lelf -lgsl -lgslcblas -lm -lcrypto $(LOCAL_LIB_DIRS)
 LIB_CFLAGS     = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_CFLAGS) $(COMMON_CFLAGS) -msse2 -mfpmath=sse -O1
 LIB_LDFLAGS    = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_LDFLAGS) -L./$(PLATFORM) $(COMMON_LDFLAGS)
 CONF_CFLAGS    = $(DEBUG_FLAGS) $(WARN_FLAGS) $(DYNINST_CFLAGS) $(COMMON_CFLAGS) -msse2

@@ -8,6 +8,9 @@
 
 #include <gsl/gsl_histogram.h>
 #include <cfloat>
+#include <openssl/sha.h>
+#include "count/hll.h"
+using libcount::HLL;
 
 #define HISTOGRAMS_PER_INST 2
 #define HISTOGRAM_SIZE 77
@@ -97,7 +100,11 @@ class FPAnalysisTHistogram : public FPAnalysis {
 	std::map<double, const char*> poi_names;
 	std::map<double, size_t> poi_in, poi_out;
 
+        // HyperLogLog++ objects used to track set cardinality.
+        HLL *hll_in, *hll_out, *hll_all, *hll_step_in, *hll_step_out, *hll_step_all;
+
         bool isPOI(long double num);
+        uint64_t hash(double i);
 };
 
 }

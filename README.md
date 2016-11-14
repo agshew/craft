@@ -36,6 +36,10 @@ Dependencies:
   `LOCAL_INC_DIRS` variable in the Makefile to point the compiler to it (using
   `-I`).
 
+* libcount (https://github.com/dialtr/libcount.git)
+
+  Add `-fPIC` to the libcount Makefile's `OPT` variable.
+  Set the `LIBCOUNT` variable in the Makefile.
 
 To build CRAFT, use the `make` command in the root directory. You will need a
 reasonably recent (4.x) version of gcc. The build has been tested with gcc

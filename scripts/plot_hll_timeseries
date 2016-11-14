@@ -1,0 +1,86 @@
+#!/usr/bin/env Rscript
+
+argv <- commandArgs(TRUE)
+
+usage <- function() {
+	print("Usage: plot* <data>+")
+	quit()
+}
+
+if (length(argv) < 1) {
+	usage()
+}
+
+argv <- commandArgs(TRUE)
+
+library(ggplot2)
+
+hll <- read.table(argv[1], header = TRUE)
+colnames(hll) <- c("Time", "Cardinality", "Bits", "Density", "LifetimeCardinality", "LifetimeBits", "LifetimeDensity")
+summary(hll)
+
+plot_1 = ggplot(data=hll, aes(x=Time, y=LifetimeCardinality)) +
+	geom_line() +
+	ggtitle(paste("Unique Numbers over Time", argv[1])) +
+	xlab("Number of Samples (in 10e6)") +
+	ylab("Cardinality") +
+	#theme with white background
+	theme_bw() +
+	#eliminates background, gridlines, and chart border
+	theme(
+	plot.background = element_blank()
+	,panel.grid.major = element_blank()
+	,panel.grid.minor = element_blank()
+	,panel.border = element_blank()
+	) +
+
+	#draws x and y axis line
+	theme(axis.line = element_line(color = 'black')) +
+
+	theme(axis.text.x = element_text(angle=0, hjust=0.5, vjust=0.5))
+
+ggsave(filename=paste(argv[1], ".png", sep=""), plot=plot_1, height=11, width=8.5)
+
+plot_1 = ggplot(data=hll, aes(x=Time, y=LifetimeBits)) +
+	geom_line() +
+	ggtitle(paste("Bits Required by", argv[1])) +
+	xlab("Number of Samples (in 10e6)") +
+	ylab("Number of Bits Required by Cardinality") +
+	#theme with white background
+	theme_bw() +
+	#eliminates background, gridlines, and chart border
+	theme(
+	plot.background = element_blank()
+	,panel.grid.major = element_blank()
+	,panel.grid.minor = element_blank()
+	,panel.border = element_blank()
+	) +
+
+	#draws x and y axis line
+	theme(axis.line = element_line(color = 'black')) +
+
+	theme(axis.text.x = element_text(angle=0, hjust=0.5, vjust=0.5))
+
+ggsave(filename=paste(argv[1], "-bits.png", sep=""), plot=plot_1, height=11, width=8.5)
+
+plot_1 = ggplot(data=hll, aes(x=Time, y=LifetimeDensity)) +
+	geom_line() +
+	ggtitle(paste("Information Density", argv[1])) +
+	xlab("Number of Samples (in 10e6)") +
+	ylab("Information Density Implied by Estimated Cardinality") +
+	#theme with white background
+	theme_bw() +
+	#eliminates background, gridlines, and chart border
+	theme(
+	plot.background = element_blank()
+	,panel.grid.major = element_blank()
+	,panel.grid.minor = element_blank()
+	,panel.border = element_blank()
+	) +
+
+	#draws x and y axis line
+	theme(axis.line = element_line(color = 'black')) +
+
+	theme(axis.text.x = element_text(angle=0, hjust=0.5, vjust=0.5))
+
+ggsave(filename=paste(argv[1], "-density.png", sep=""), plot=plot_1, height=11, width=8.5)

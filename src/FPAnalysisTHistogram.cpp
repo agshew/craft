@@ -211,6 +211,13 @@ FPAnalysisTHistogram::FPAnalysisTHistogram(bool histPerInst)
     poi_names[2 * M_PI] = "2*pi";
     poi_names[HUGE_VAL] = "HUGE_VAL";
     poi_names[INFINITY] = "infinity";
+
+    hll_in = HLL::Create(12);
+    hll_out = HLL::Create(12);
+    hll_all = HLL::Create(12);
+    hll_step_in = HLL::Create(12);
+    hll_step_out = HLL::Create(12);
+    hll_step_all = HLL::Create(12);
 }
 
 string FPAnalysisTHistogram::getTag()
@@ -417,63 +424,140 @@ bool FPAnalysisTHistogram::isPOI(long double num)
     return false;
 }
 
+uint64_t FPAnalysisTHistogram::hash(double i) {
+    // Structure that is 160 bits wide used to extract 64 bits from a SHA-1.
+    struct hashval {
+      uint64_t high64;
+      char low96[12];
+    } hash;
+ 
+    // Calculate the SHA-1 hash of the integer.
+    SHA_CTX ctx;
+    SHA1_Init(&ctx);
+    SHA1_Update(&ctx, (unsigned char*)&i, sizeof(i));
+    SHA1_Final((unsigned char*)&hash, &ctx);
+ 
+    // Return 64 bits of the hash.
+    return hash.high64;
+}
+
 void FPAnalysisTHistogram::checkHistogram(FPSemantics *inst, FPOperand *op, bool out)
 {
-    FILE * histFile;
-    char histFileName[128];
+    FILE * outFile;
+    char fileName[128];
     long double num;
     long unsigned int sum;
+    double timestep;
     pid_t pid;
+    uint64_t numhash, card, card_step;
+    double bits, bits_step, density_step, density;
 
     // extract operand information
     num = op->getCurrentValueLD();
+
+    numhash = hash(num);
+    hll_all->Update(numhash);
+    hll_step_all->Update(numhash);
+
     if (!out) {
+        hll_in->Update(numhash);
+        hll_step_in->Update(numhash);
+
         gsl_histogram_increment(histogram_in, (double)num);
         gsl_histogram_increment(hist_step_in, (double)num);
+
         if (num  < min_in) { min_in = num;  }
         if (num  > max_in) { max_in = num;  }
         if (isPOI(num)) { poi_in[num]++;  }
 
         sum = (long unsigned int) gsl_histogram_sum(histogram_in);
+        timestep = (double) sum / HISTOGRAM_TIMESTEP;
         if (sum > 0 && sum % HISTOGRAM_TIMESTEP == 0) {
             pid = getpid();
-            cout << "writing histogram " << pid << " (input), step " << (double) sum / HISTOGRAM_TIMESTEP << endl;
-            sprintf(histFileName, "hist-%d-all-in-timeseries", pid);
-            histFile = fopen(histFileName, "a");
-            fprintfHistogramTimeseries(histFile, hist_step_in, (double) sum / HISTOGRAM_TIMESTEP);
-            fclose(histFile);
+            cout << "writing histogram " << pid << " (input), step " << timestep << endl;
+            sprintf(fileName, "hist-%d-all-in-timeseries", pid);
+            outFile = fopen(fileName, "a");
+            fprintfHistogramTimeseries(outFile, hist_step_in, timestep);
+            fclose(outFile);
             gsl_histogram_set_ranges(hist_step_in, hist_breaks, HISTOGRAM_SIZE);
 
-            sprintf(histFileName, "hist-%d-poi-in", getpid());
-            printf("writing %s\n", histFileName);
-            histFile = fopen(histFileName, "w");
+            sprintf(fileName, "hist-%d-poi-in", getpid());
+            printf("writing %s\n", fileName);
+            outFile = fopen(fileName, "w");
             for(map<double, size_t>::const_iterator it = poi_in.begin(); it != poi_in.end(); ++it)
-                fprintf(histFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
-            fclose(histFile);
+                fprintf(outFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
+            fclose(outFile);
+
+            sprintf(fileName, "hll-%d-in-timeseries", getpid());
+            printf("writing %s\n", fileName);
+            outFile = fopen(fileName, "a");
+            card_step = hll_step_in->Estimate();
+            bits_step = log2(card_step);
+            density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+            card = hll_in->Estimate();
+            bits = log2(card);
+            density = bits > 32 ? bits / 64 : bits / 32;
+            fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+            fclose(outFile);
+            delete hll_step_in;
+            hll_step_in = HLL::Create(12);
         }
     } else {
+        hll_out->Update(numhash);
+        hll_step_out->Update(numhash);
+
         gsl_histogram_increment(histogram_out, (double)num);
         gsl_histogram_increment(hist_step_out, (double)num);
+
         if (num  < min_out) { min_out = num;  }
         if (num  > max_out) { max_out = num;  }
         if (isPOI(num)) { poi_out[num]++;  }
 
         sum = (long unsigned int) gsl_histogram_sum(histogram_out);
+        timestep = (double) sum / HISTOGRAM_TIMESTEP;
         if (sum > 0 && sum % HISTOGRAM_TIMESTEP == 0) {
             pid = getpid();
-            cout << "writing histogram " << pid << " (output), step " << (double) sum / HISTOGRAM_TIMESTEP << endl;
-            sprintf(histFileName, "hist-%d-all-out-timeseries", pid);
-            histFile = fopen(histFileName, "a");
-            fprintfHistogramTimeseries(histFile, hist_step_out, (double) sum / HISTOGRAM_TIMESTEP);
-            fclose(histFile);
+            cout << "writing histogram " << pid << " (output), step " << timestep << endl;
+            sprintf(fileName, "hist-%d-all-out-timeseries", pid);
+            outFile = fopen(fileName, "a");
+            fprintfHistogramTimeseries(outFile, hist_step_out, timestep);
+            fclose(outFile);
             gsl_histogram_set_ranges(hist_step_out, hist_breaks, HISTOGRAM_SIZE);
 
-            sprintf(histFileName, "hist-%d-poi-out", getpid());
-            printf("writing %s\n", histFileName);
-            histFile = fopen(histFileName, "w");
+            sprintf(fileName, "hist-%d-poi-out", getpid());
+            printf("writing %s\n", fileName);
+            outFile = fopen(fileName, "w");
             for(map<double, size_t>::const_iterator it = poi_out.begin(); it != poi_out.end(); ++it)
-                fprintf(histFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
-            fclose(histFile);
+                fprintf(outFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
+            fclose(outFile);
+
+            sprintf(fileName, "hll-%d-out-timeseries", getpid());
+            printf("writing %s\n", fileName);
+            outFile = fopen(fileName, "a");
+            card_step = hll_step_out->Estimate();
+            bits_step = log2(card_step);
+            density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+            card = hll_out->Estimate();
+            bits = log2(card);
+            density = bits > 32 ? bits / 64 : bits / 32;
+            fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+            fclose(outFile);
+            delete hll_step_out;
+            hll_step_out = HLL::Create(12);
+
+            sprintf(fileName, "hll-%d-all-timeseries", getpid());
+            printf("writing %s\n", fileName);
+            outFile = fopen(fileName, "a");
+            card_step = hll_step_all->Estimate();
+            bits_step = log2(card_step);
+            density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+            card = hll_all->Estimate();
+            bits = log2(card);
+            density = bits > 32 ? bits / 64 : bits / 32;
+            fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+            fclose(outFile);
+            delete hll_step_all;
+            hll_step_all = HLL::Create(12);
         }
     }
 
@@ -571,76 +655,115 @@ void FPAnalysisTHistogram::fprintfHistogram(FILE * stream, const gsl_histogram *
 
 void FPAnalysisTHistogram::finalOutput()
 {
-    FILE * histFile;
-    char histFileName[128];
+    FILE * outFile;
+    char fileName[128];
     size_t i;
     long unsigned int sum;
+    double timestep;
+    uint64_t card, card_step;
+    double bits, bits_step, density_step, density;
 
     if (perInst) {
         for (i = 0; i < instCount; i++) {
             if (instData[i].inst) {
-                sprintf(histFileName, "hist-%d-%lu-in", getpid(), i);
-                histFile = fopen(histFileName, "w");
-                fprintfHistogram(histFile, instData[i].histogram_in, instData[i].min, instData[i].max);
-                fclose(histFile);
+                sprintf(fileName, "hist-%d-%lu-in", getpid(), i);
+                outFile = fopen(fileName, "w");
+                fprintfHistogram(outFile, instData[i].histogram_in, instData[i].min, instData[i].max);
+                fclose(outFile);
     
-                sprintf(histFileName, "hist-%d-%lu-out", getpid(), i);
-                histFile = fopen(histFileName, "w");
-                fprintfHistogram(histFile, instData[i].histogram_out, instData[i].min, instData[i].max);
-                fclose(histFile);
+                sprintf(fileName, "hist-%d-%lu-out", getpid(), i);
+                outFile = fopen(fileName, "w");
+                fprintfHistogram(outFile, instData[i].histogram_out, instData[i].min, instData[i].max);
+                fclose(outFile);
             }
         }
     }
 
-    sprintf(histFileName, "hist-%d-all-in", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
-    gsl_histogram_fprintf(histFile, histogram_in, "%g", "%g");
-    fclose(histFile);
+    sprintf(fileName, "hist-%d-all-in", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
+    gsl_histogram_fprintf(outFile, histogram_in, "%g", "%g");
+    fclose(outFile);
 
-    sprintf(histFileName, "hist-%d-all-out", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
-    gsl_histogram_fprintf(histFile, histogram_out, "%g", "%g");
-    fclose(histFile);
+    sprintf(fileName, "hist-%d-all-out", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
+    gsl_histogram_fprintf(outFile, histogram_out, "%g", "%g");
+    fclose(outFile);
 
-    sprintf(histFileName, "hist-%d-poi-in", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
+    sprintf(fileName, "hist-%d-poi-in", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
     for(map<double, size_t>::const_iterator it = poi_in.begin(); it != poi_in.end(); ++it)
-        fprintf(histFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
-    fclose(histFile);
+        fprintf(outFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
+    fclose(outFile);
 
-    sprintf(histFileName, "hist-%d-poi-out", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
+    sprintf(fileName, "hist-%d-poi-out", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
     for(map<double, size_t>::const_iterator it = poi_out.begin(); it != poi_out.end(); ++it)
-        fprintf(histFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
-    fclose(histFile);
+        fprintf(outFile, "%g \"%s\" %lu\n", it->first, poi_names[it->first], it->second);
+    fclose(outFile);
 
     sum = (long unsigned int) gsl_histogram_sum(histogram_in);
-    sprintf(histFileName, "hist-%d-all-in-timeseries", getpid());
-    histFile = fopen(histFileName, "a");
-    fprintfHistogramTimeseries(histFile, hist_step_in, (double)sum / HISTOGRAM_TIMESTEP);
-    fclose(histFile);
+    timestep = (double)sum / HISTOGRAM_TIMESTEP;
+    sprintf(fileName, "hist-%d-all-in-timeseries", getpid());
+    outFile = fopen(fileName, "a");
+    fprintfHistogramTimeseries(outFile, hist_step_in, timestep);
+    fclose(outFile);
+
+    sprintf(fileName, "hll-%d-in-timeseries", getpid());
+    outFile = fopen(fileName, "a");
+    card_step = hll_step_in->Estimate();
+    bits_step = log2(card_step);
+    density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+    card = hll_in->Estimate();
+    bits = log2(card);
+    density = bits > 32 ? bits / 64 : bits / 32;
+    fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+    fclose(outFile);
 
     sum = (long unsigned int) gsl_histogram_sum(histogram_out);
-    sprintf(histFileName, "hist-%d-all-out-timeseries", getpid());
-    histFile = fopen(histFileName, "a");
-    fprintfHistogramTimeseries(histFile, hist_step_out, (double)sum / HISTOGRAM_TIMESTEP);
-    fclose(histFile);
+    timestep = (double)sum / HISTOGRAM_TIMESTEP;
+    sprintf(fileName, "hist-%d-all-out-timeseries", getpid());
+    outFile = fopen(fileName, "a");
+    fprintfHistogramTimeseries(outFile, hist_step_out, timestep);
+    fclose(outFile);
 
-    sprintf(histFileName, "hist-%d-all-in", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
-    fprintfHistogram(histFile, histogram_in, min_in, max_in);
-    fclose(histFile);
+    sprintf(fileName, "hll-%d-out-timeseries", getpid());
+    outFile = fopen(fileName, "a");
+    card_step = hll_step_out->Estimate();
+    bits_step = log2(card_step);
+    density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+    card = hll_out->Estimate();
+    bits = log2(card);
+    density = bits > 32 ? bits / 64 : bits / 32;
+    fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+    fclose(outFile);
 
-    sprintf(histFileName, "hist-%d-all-out", getpid());
-    printf("writing %s\n", histFileName);
-    histFile = fopen(histFileName, "w");
-    fprintfHistogram(histFile, histogram_out, min_out, max_out);
-    fclose(histFile);
+    sprintf(fileName, "hist-%d-all-in", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
+    fprintfHistogram(outFile, histogram_in, min_in, max_in);
+    fclose(outFile);
+
+    sprintf(fileName, "hist-%d-all-out", getpid());
+    //printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "w");
+    fprintfHistogram(outFile, histogram_out, min_out, max_out);
+    fclose(outFile);
+
+    sprintf(fileName, "hll-%d-all-timeseries", getpid());
+    printf("writing %s\n", fileName);
+    outFile = fopen(fileName, "a");
+    card_step = hll_step_all->Estimate();
+    bits_step = log2(card_step);
+    density_step = bits_step > 32 ? bits_step / 64 : bits_step / 32;
+    card = hll_all->Estimate();
+    bits = log2(card);
+    density = bits > 32 ? bits / 64 : bits / 32;
+    fprintf(outFile, "%g %lu %g %g %lu %g %g\n", timestep, card_step, bits_step, density_step, card, bits, density);
+    fclose(outFile);
 }
 
 }
